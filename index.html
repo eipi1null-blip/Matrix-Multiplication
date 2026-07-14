@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Matrix Multiplication Applet</title>
+  <style>
+    :root {
+      --ink: #243044;
+      --muted: #667284;
+      --blue: #2f58b5;
+      --pink: #cf4f79;
+      --gold: #d69a21;
+      --green: #2f9b70;
+      --panel: #eef3fb;
+      --grid: #d9e0ea;
+      --cell: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 14px;
+      background: #f8fbff;
+      color: var(--ink);
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+    .applet {
+      width: min(1180px, 100%);
+      background: #fff;
+      border: 2px solid #8f8f8f;
+      box-shadow: 0 10px 30px rgba(35, 48, 68, .14);
+    }
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 14px 22px;
+      padding: 14px 18px;
+      background: var(--panel);
+      border-bottom: 3px solid #b3bfd2;
+    }
+    .control {
+      display: inline-grid;
+      gap: 6px;
+      font-weight: 800;
+      color: #3b4352;
+    }
+    select, button, input {
+      font: 700 16px "Segoe UI", Arial, sans-serif;
+    }
+    select {
+      border: 2px solid #b9c4d6;
+      border-radius: 7px;
+      padding: 7px 10px;
+      background: #fff;
+      color: var(--ink);
+    }
+    button {
+      border: 0;
+      border-radius: 7px;
+      padding: 10px 14px;
+      background: var(--blue);
+      color: #fff;
+      cursor: pointer;
+      touch-action: manipulation;
+      font-weight: 800;
+    }
+    button.secondary { background: #68758a; }
+    .equation {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) auto minmax(220px, 1fr) auto minmax(220px, 1fr);
+      gap: 14px;
+      align-items: center;
+      padding: 18px;
+    }
+    .matrix-card {
+      min-width: 0;
+      display: grid;
+      justify-items: center;
+      gap: 10px;
+    }
+    .matrix-title {
+      font: 800 24px Georgia, serif;
+    }
+    .matrix-wrap {
+      position: relative;
+      display: inline-block;
+      padding: 6px 14px;
+    }
+    .matrix-wrap::before,
+    .matrix-wrap::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 10px;
+      border-top: 3px solid #3a3d45;
+      border-bottom: 3px solid #3a3d45;
+    }
+    .matrix-wrap::before {
+      left: 0;
+      border-left: 3px solid #3a3d45;
+    }
+    .matrix-wrap::after {
+      right: 0;
+      border-right: 3px solid #3a3d45;
+    }
+    .matrix {
+      display: grid;
+      gap: 8px;
+    }
+    .entry {
+      width: 58px;
+      height: 44px;
+      border: 2px solid var(--grid);
+      border-radius: 6px;
+      background: var(--cell);
+      text-align: center;
+      color: var(--ink);
+    }
+    .entry:focus {
+      outline: 3px solid rgba(47, 88, 181, .25);
+      border-color: var(--blue);
+    }
+    .entry.row-hot { background: rgba(47, 88, 181, .15); border-color: var(--blue); }
+    .entry.col-hot { background: rgba(207, 79, 121, .15); border-color: var(--pink); }
+    .entry.product-hot { background: rgba(214, 154, 33, .18); border-color: var(--gold); }
+    .result-cell {
+      width: 64px;
+      height: 44px;
+      border: 2px solid var(--grid);
+      border-radius: 6px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      font: 800 18px Georgia, serif;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .result-cell.active {
+      background: rgba(214, 154, 33, .18);
+      border-color: var(--gold);
+      box-shadow: 0 0 0 4px rgba(214, 154, 33, .18);
+    }
+    .symbol {
+      font: 900 42px Georgia, serif;
+      color: #3a4050;
+      align-self: center;
+      justify-self: center;
+    }
+    .explain {
+      border-top: 2px solid #d9e0ea;
+      background: #fbfdff;
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+    .dot-product {
+      font: 800 24px Georgia, serif;
+      line-height: 1.7;
+      color: #30384d;
+      text-align: center;
+      overflow-wrap: anywhere;
+    }
+    .tokens {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    .token {
+      display: inline-grid;
+      grid-template-columns: auto auto auto;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 10px;
+      border-radius: 7px;
+      background: #fff;
+      border: 2px solid #dbe2ec;
+      font: 800 18px Georgia, serif;
+    }
+    .token .a { color: var(--blue); }
+    .token .b { color: var(--pink); }
+    .status {
+      text-align: center;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    @media (max-width: 900px) {
+      .equation {
+        grid-template-columns: 1fr;
+      }
+      .symbol { transform: rotate(90deg); }
+      .entry, .result-cell { width: 52px; height: 40px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="applet" aria-label="Matrix multiplication applet">
+    <section class="topbar">
+      <label class="control">Rows of A
+        <select id="rowsA">
+          <option>2</option>
+          <option selected>3</option>
+        </select>
+      </label>
+      <label class="control">Shared columns/rows
+        <select id="shared">
+          <option selected>2</option>
+          <option>3</option>
+          <option>4</option>
+        </select>
+      </label>
+      <label class="control">Columns of B
+        <select id="colsB">
+          <option>2</option>
+          <option selected>3</option>
+        </select>
+      </label>
+      <button id="randomize" type="button">New numbers</button>
+      <button id="reset" type="button" class="secondary">Reset</button>
+    </section>
+
+    <section class="equation">
+      <div class="matrix-card">
+        <div class="matrix-title">A</div>
+        <div class="matrix-wrap"><div id="matrixA" class="matrix"></div></div>
+      </div>
+      <div class="symbol">×</div>
+      <div class="matrix-card">
+        <div class="matrix-title">B</div>
+        <div class="matrix-wrap"><div id="matrixB" class="matrix"></div></div>
+      </div>
+      <div class="symbol">=</div>
+      <div class="matrix-card">
+        <div class="matrix-title">AB</div>
+        <div class="matrix-wrap"><div id="matrixC" class="matrix"></div></div>
+      </div>
+    </section>
+
+    <section class="explain">
+      <div id="status" class="status"></div>
+      <div id="dotProduct" class="dot-product"></div>
+      <div id="tokens" class="tokens"></div>
+    </section>
+  </main>
+
+  <script>
+    const rowsASelect = document.getElementById("rowsA");
+    const sharedSelect = document.getElementById("shared");
+    const colsBSelect = document.getElementById("colsB");
+    const matrixAEl = document.getElementById("matrixA");
+    const matrixBEl = document.getElementById("matrixB");
+    const matrixCEl = document.getElementById("matrixC");
+    const dotProductEl = document.getElementById("dotProduct");
+    const tokensEl = document.getElementById("tokens");
+    const statusEl = document.getElementById("status");
+    const randomizeBtn = document.getElementById("randomize");
+    const resetBtn = document.getElementById("reset");
+
+    const state = {
+      rowsA: 3,
+      shared: 2,
+      colsB: 3,
+      activeRow: 0,
+      activeCol: 0,
+      A: [[2, -1], [0, 3], [4, 1]],
+      B: [[1, 2, -2], [3, 0, 5]]
+    };
+
+    function numberOrZero(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : 0;
+    }
+    function randomEntry() {
+      let n = Math.floor(Math.random() * 9) - 4;
+      return n === 0 ? 1 : n;
+    }
+    function resizeMatrix(oldMatrix, rows, cols, fillFn) {
+      return Array.from({ length: rows }, (_, r) =>
+        Array.from({ length: cols }, (_, c) =>
+          oldMatrix[r] && oldMatrix[r][c] !== undefined ? oldMatrix[r][c] : fillFn(r, c)
+        )
+      );
+    }
+    function productCell(row, col) {
+      let total = 0;
+      for (let k = 0; k < state.shared; k++) total += state.A[row][k] * state.B[k][col];
+      return total;
+    }
+    function productMatrix() {
+      return Array.from({ length: state.rowsA }, (_, r) =>
+        Array.from({ length: state.colsB }, (_, c) => productCell(r, c))
+      );
+    }
+    function configureGrid(el, rows, cols) {
+      el.style.gridTemplateColumns = `repeat(${cols}, auto)`;
+      el.style.gridTemplateRows = `repeat(${rows}, auto)`;
+    }
+    function renderInputMatrix(el, matrix, rows, cols, type) {
+      configureGrid(el, rows, cols);
+      el.innerHTML = "";
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const input = document.createElement("input");
+          input.className = "entry";
+          input.type = "number";
+          input.step = "1";
+          input.value = matrix[r][c];
+          input.inputMode = "numeric";
+          input.dataset.type = type;
+          input.dataset.row = String(r);
+          input.dataset.col = String(c);
+          if (type === "A" && r === state.activeRow) input.classList.add("row-hot");
+          if (type === "B" && c === state.activeCol) input.classList.add("col-hot");
+          input.addEventListener("input", () => {
+            matrix[r][c] = numberOrZero(input.value);
+            render();
+          });
+          input.addEventListener("focus", () => {
+            if (type === "A") state.activeRow = r;
+            if (type === "B") state.activeCol = c;
+            render();
+          });
+          el.appendChild(input);
+        }
+      }
+    }
+    function renderResultMatrix() {
+      const C = productMatrix();
+      configureGrid(matrixCEl, state.rowsA, state.colsB);
+      matrixCEl.innerHTML = "";
+      for (let r = 0; r < state.rowsA; r++) {
+        for (let c = 0; c < state.colsB; c++) {
+          const cell = document.createElement("button");
+          cell.type = "button";
+          cell.className = "result-cell";
+          if (r === state.activeRow && c === state.activeCol) cell.classList.add("active");
+          cell.textContent = String(C[r][c]);
+          cell.setAttribute("aria-label", `Show entry row ${r + 1}, column ${c + 1}`);
+          cell.addEventListener("click", () => {
+            state.activeRow = r;
+            state.activeCol = c;
+            render();
+          });
+          matrixCEl.appendChild(cell);
+        }
+      }
+    }
+    function renderExplanation() {
+      const r = state.activeRow;
+      const c = state.activeCol;
+      statusEl.textContent = `Entry (${r + 1}, ${c + 1}) of AB uses row ${r + 1} of A and column ${c + 1} of B.`;
+      const parts = [];
+      let total = 0;
+      for (let k = 0; k < state.shared; k++) {
+        const a = state.A[r][k];
+        const b = state.B[k][c];
+        total += a * b;
+        parts.push(`(${a} × ${b})`);
+      }
+      dotProductEl.textContent = `c${r + 1}${c + 1} = ${parts.join(" + ")} = ${total}`;
+      tokensEl.innerHTML = "";
+      for (let k = 0; k < state.shared; k++) {
+        const token = document.createElement("div");
+        token.className = "token";
+        token.innerHTML = `<span class="a">a<sub>${r + 1}${k + 1}</sub> = ${state.A[r][k]}</span><span>×</span><span class="b">b<sub>${k + 1}${c + 1}</sub> = ${state.B[k][c]}</span>`;
+        tokensEl.appendChild(token);
+      }
+    }
+    function render() {
+      state.activeRow = Math.min(state.activeRow, state.rowsA - 1);
+      state.activeCol = Math.min(state.activeCol, state.colsB - 1);
+      renderInputMatrix(matrixAEl, state.A, state.rowsA, state.shared, "A");
+      renderInputMatrix(matrixBEl, state.B, state.shared, state.colsB, "B");
+      renderResultMatrix();
+      renderExplanation();
+    }
+    function syncDimensions() {
+      state.rowsA = Number(rowsASelect.value);
+      state.shared = Number(sharedSelect.value);
+      state.colsB = Number(colsBSelect.value);
+      state.A = resizeMatrix(state.A, state.rowsA, state.shared, randomEntry);
+      state.B = resizeMatrix(state.B, state.shared, state.colsB, randomEntry);
+      render();
+    }
+    function randomize() {
+      state.A = Array.from({ length: state.rowsA }, () => Array.from({ length: state.shared }, randomEntry));
+      state.B = Array.from({ length: state.shared }, () => Array.from({ length: state.colsB }, randomEntry));
+      render();
+    }
+    function reset() {
+      rowsASelect.value = "3";
+      sharedSelect.value = "2";
+      colsBSelect.value = "3";
+      state.rowsA = 3;
+      state.shared = 2;
+      state.colsB = 3;
+      state.activeRow = 0;
+      state.activeCol = 0;
+      state.A = [[2, -1], [0, 3], [4, 1]];
+      state.B = [[1, 2, -2], [3, 0, 5]];
+      render();
+    }
+    [rowsASelect, sharedSelect, colsBSelect].forEach(el => el.addEventListener("change", syncDimensions));
+    randomizeBtn.addEventListener("click", randomize);
+    resetBtn.addEventListener("click", reset);
+    render();
+  </script>
+</body>
+</html>
